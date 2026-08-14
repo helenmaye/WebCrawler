@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WebCrawler.Console/WebCrawler.Console.csproj" />
+    <Project Path="src/WebCrawler.Core/WebCrawler.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WebCrawler.Tests/WebCrawler.Tests.csproj" />
+  </Folder>
+</Solution>
