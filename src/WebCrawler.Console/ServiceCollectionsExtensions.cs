@@ -7,8 +7,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddCrawlerServices(this IServiceCollection services)
     {
-        services.AddScoped<IProcessHTML, ProcessHTML>();
-        services.AddScoped<IBuildUri, BuildUri>();
+        services.AddTransient<IProcessHtml, ProcessHtml>();
+        services.AddTransient<IBuildUri, BuildUri>();
         services.AddHttpClient<IPageFetcher, HttpPageFetcher>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(10);

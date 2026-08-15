@@ -10,6 +10,10 @@ public class MockHttpMessageHandler(string defaultContent, HttpStatusCode defaul
     public void SetupResponse(string url, string content, HttpStatusCode status = HttpStatusCode.OK)
         => _routes[url] = (status, content);
 
+    private int callCounter {get;set;} = 0;
+
+    public int NoOfPagesCalled() => callCounter;
+
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -25,6 +29,8 @@ public class MockHttpMessageHandler(string defaultContent, HttpStatusCode defaul
             RequestMessage = request
         };
 
+        callCounter +=1;
+
         return Task.FromResult(response);
     }
-}
+} 

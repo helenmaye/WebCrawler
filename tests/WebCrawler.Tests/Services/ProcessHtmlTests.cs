@@ -6,15 +6,15 @@ using WebCrawler.Core.Interfaces;
 
 namespace WebCrawler.Tests.Services;
 
-public class ProcessHTMLTests
+public class ProcessHtmlTests
 {
     [Fact]
     public async Task GivenValidHTMLwithLinks_WhenGetLinks_ThenReturnsLinks()
     {
         //Arrange
-        IBuildUri buildUriMock = Substitute.For<IBuildUri>();
+        var buildUriMock = Substitute.For<IBuildUri>();
 
-        var basehtml = "https://localhost";
+        var baseHtml = "https://localhost";
         var html1 = "/pages/link1";
         var html2 = "/pages/link2";
         var html = $"""
@@ -29,16 +29,16 @@ public class ProcessHTMLTests
                     </html>
                 """;
         
-        var uri1 = new Uri($"{basehtml}{html1}");
-        var uri2 = new Uri($"{basehtml}{html2}");
+        var uri1 = new Uri($"{baseHtml}{html1}");
+        var uri2 = new Uri($"{baseHtml}{html2}");
 
-        buildUriMock.Build(new Uri(basehtml), html1).Returns(uri1);
-        buildUriMock.Build(new Uri(basehtml), html2).Returns(uri2);
+        buildUriMock.Build(new Uri(baseHtml), html1).Returns(uri1);
+        buildUriMock.Build(new Uri(baseHtml), html2).Returns(uri2);
 
-        IProcessHTML subject = new ProcessHTML(buildUriMock);
+        IProcessHtml subject = new ProcessHtml(buildUriMock);
 
         //Act
-        var result = subject.ExtractLinks(html, new Uri(basehtml));
+        var result = subject.ExtractLinks(html, new Uri(baseHtml)).ToList();
 
         //Assert
         result.Count().ShouldBe(2);
@@ -50,10 +50,10 @@ public class ProcessHTMLTests
     public async Task GivenValidHTMLwithNoLinks_WhenGetLinks_ThenReturnsEmptyEnumerable()
     {
         //Arrange
-        IBuildUri buildUriMock = Substitute.For<IBuildUri>();
-        IProcessHTML subject = new ProcessHTML(buildUriMock);
+        var buildUriMock = Substitute.For<IBuildUri>();
+        IProcessHtml subject = new ProcessHtml(buildUriMock);
         
-        var basehtml = "https://localhost";
+        var baseHtml = "https://localhost";
         var html = """
                     <html>
                     <head>
@@ -71,7 +71,7 @@ public class ProcessHTMLTests
         using var doc = await context.OpenAsync(req => req.Content(html));
 
         //Act
-        var result = subject.ExtractLinks(html, new Uri(basehtml));
+        var result = subject.ExtractLinks(html, new Uri(baseHtml));
 
         //Assert
         result.Count().ShouldBe(0);
