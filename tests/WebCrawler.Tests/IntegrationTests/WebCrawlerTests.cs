@@ -3,11 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Shouldly;
 using WebCrawler.Console;
-using WebCrawler.Core;
+using WebCrawler.Core.Services;
 using WebCrawler.Core.Interfaces;
 
-
-namespace WebCrawler.Tests;
+namespace WebCrawler.Tests.IntegrationTests;
 
 public class WebCrawlerTests
 {

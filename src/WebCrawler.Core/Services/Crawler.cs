@@ -43,7 +43,7 @@ public class Crawler(IPageFetcher fetcher, IProcessHTML processor, IOptions<Conf
             {
                 try
                 {
-                    await ProcessUrl(url, channel.Writer, discovered, Enqueue);
+                    await ProcessUrl(url, discovered, Enqueue);
                 }
                 finally
                 {
@@ -59,7 +59,7 @@ public class Crawler(IPageFetcher fetcher, IProcessHTML processor, IOptions<Conf
         return discovered;
     }
 
-    private async Task ProcessUrl(Uri url, ChannelWriter<Uri> writer, ConcurrentBag<Uri> discovered, Func<Uri, Task> enqueue)
+    private async Task ProcessUrl(Uri url, ConcurrentBag<Uri> discovered, Func<Uri, Task> enqueue)
     {
         var fetchResult = await fetcher.FetchAsync(url);
 

@@ -1,7 +1,7 @@
 using WebCrawler.Core.Interfaces;
 using WebCrawler.Core.Models;
 
-namespace WebCrawler.Core;
+namespace WebCrawler.Core.Services;
 
 public class HttpPageFetcher(HttpClient httpClient) : IPageFetcher
 {

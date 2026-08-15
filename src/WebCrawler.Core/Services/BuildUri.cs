@@ -1,6 +1,6 @@
-
 using WebCrawler.Core.Interfaces;
 
+namespace WebCrawler.Core.Services;
 public class BuildUri : IBuildUri
 {
     private static readonly HashSet<string> AllowedSchemes =

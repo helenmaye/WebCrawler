@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text;
 
+namespace WebCrawler.Tests.IntegrationTests;
+
 public class MockHttpMessageHandler(string defaultContent, HttpStatusCode defaultStatus = HttpStatusCode.OK) : HttpMessageHandler
 {
     private readonly Dictionary<string, (HttpStatusCode Status, string Content)> _routes = new();

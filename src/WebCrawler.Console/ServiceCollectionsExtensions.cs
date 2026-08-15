@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using WebCrawler.Core;
+using WebCrawler.Core.Services;
 using WebCrawler.Core.Interfaces;
 
 namespace WebCrawler.Console;
@@ -9,7 +9,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<IProcessHTML, ProcessHTML>();
         services.AddScoped<IBuildUri, BuildUri>();
-        services.AddScoped<IHtmlFetcher, HtmlFetcher>();
         services.AddHttpClient<IPageFetcher, HttpPageFetcher>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(10);
