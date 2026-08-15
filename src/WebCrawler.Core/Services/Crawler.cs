@@ -1,49 +1,76 @@
-using AngleSharp.Dom;
+using System.Collections.Concurrent;
+using System.Threading.Channels;
 using WebCrawler.Core.Interfaces;
+using WebCrawler.Core.Models;
+using Microsoft.Extensions.Options;
 
-public class Crawler(IPageFetcher fetcher, IProcessHTML processor)
+public class Crawler(IPageFetcher fetcher, IProcessHTML processor, IOptions<ConfigurationOptions> options)
 {
-
     public async Task Run()
     {
-        Console.WriteLine("run program y/n");
+        Console.WriteLine("Please enter starting URL");
 
-        var response = Console.ReadLine();
-
-        if (response == "y" || response == "Y")
+        var url = Console.ReadLine();
+        if (!String.IsNullOrEmpty(url))
         {
-            //var html = await fetcher.GetHtmlAsStringAsync("https://www.bbc.co.uk/");
-
-            //var res = processor.ExtractLinks(html, new Uri("https://www.bbc.co.uk/"));
-
-            await FindAllLinks(new Uri("https://www.bbc.co.uk/"), new CancellationToken());
-
+            await Start(url);
         }
     }
 
-    // public async Task<IEnumerable<Uri>> FindAllLinks(Uri url, CancellationToken ct)
-    // {
-    //     var fetchResult = await fetcher.FetchAsync(url, ct);
-    //     var results = new List<Uri>();
-    //     if (fetchResult.Success && !string.IsNullOrEmpty(fetchResult.Html))
-    //     {
-    //         foreach (var link in processor.ExtractLinks(fetchResult.Html, url))
-    //         {
-    //             results.Add(link);
-    //         }
-    //     }
-    //     return results;
-    // }
-
-    public async Task FindAllLinks(Uri url, CancellationToken ct)
+    public async Task<ConcurrentBag<Uri>> Start(string seedUrl)
     {
-        var fetchResult = await fetcher.FetchAsync(url, ct);
+        var discovered = new ConcurrentBag<Uri>();
+
+        var channel = Channel.CreateBounded<Uri>(new BoundedChannelOptions(options.Value.ChannelCapacity)
+        {
+            FullMode = BoundedChannelFullMode.Wait
+        });
+
+        var seen = new HashSet<string> { seedUrl };
+        var inFlight = 0;
+
+        async Task Enqueue(Uri uri)
+        {
+            Interlocked.Increment(ref inFlight);
+            await channel.Writer.WriteAsync(uri);
+        }
+
+        await Enqueue(new Uri(seedUrl));
+
+        var workers = Enumerable.Range(0, options.Value.MaxConcurrency).Select(_ => Task.Run(async () => 
+        {
+            await foreach (var url in channel.Reader.ReadAllAsync())
+            {
+                try
+                {
+                    await ProcessUrl(url, channel.Writer, discovered, Enqueue);
+                }
+                finally
+                {
+                    if (Interlocked.Decrement(ref inFlight) == 0)
+                    {
+                        channel.Writer.TryComplete();
+                    }
+                }
+            }
+        })).ToArray();
+
+        await Task.WhenAll(workers);
+        return discovered;
+    }
+
+    private async Task ProcessUrl(Uri url, ChannelWriter<Uri> writer, ConcurrentBag<Uri> discovered, Func<Uri, Task> enqueue)
+    {
+        var fetchResult = await fetcher.FetchAsync(url);
+
         if (fetchResult.Success && !string.IsNullOrEmpty(fetchResult.Html))
         {
             foreach (var link in processor.ExtractLinks(fetchResult.Html, url))
             {
-                Console.WriteLine(link);
+                await enqueue(link); 
+                discovered.Add(link);
             }
         }
+        
     }
 }

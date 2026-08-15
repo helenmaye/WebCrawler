@@ -5,11 +5,11 @@ namespace WebCrawler.Core;
 
 public class HttpPageFetcher(HttpClient httpClient) : IPageFetcher
 {
-    public async Task<FetchResult> FetchAsync(Uri url, CancellationToken ct)
+    public async Task<FetchResult> FetchAsync(Uri url)
     {
         try
         {
-            using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseContentRead, ct);
+            using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseContentRead);
 
             if (!response.IsSuccessStatusCode)
                 return new FetchResult(url)
@@ -19,21 +19,13 @@ public class HttpPageFetcher(HttpClient httpClient) : IPageFetcher
                     Error = $"Non-success status code : {(int)response.StatusCode}"
                 };
 
-            var html = await response.Content.ReadAsStringAsync(ct);
+            var html = await response.Content.ReadAsStringAsync();
 
             return new FetchResult(url)
             {
                 StatusCode = response.StatusCode,
                 Success = true,
                 Html = html
-            };
-        }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return new FetchResult(url)
-            {
-                Success = false,
-                Error = "Request timed out"
             };
         }
         catch (HttpRequestException ex)

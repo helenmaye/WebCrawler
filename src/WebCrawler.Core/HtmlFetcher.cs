@@ -1,8 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using AngleSharp;
-using AngleSharp.Html.Dom;
 using WebCrawler.Core.Interfaces;
-using WebCrawler.Core.Models;
 
 namespace WebCrawler.Core;
 

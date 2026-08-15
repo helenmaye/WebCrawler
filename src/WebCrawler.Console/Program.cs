@@ -1,23 +1,17 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using WebCrawler.Core;
-using WebCrawler.Core.Interfaces;
+using WebCrawler.Console;
+using WebCrawler.Core.Models;
 
 
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddScoped<IPageFetcher, HttpPageFetcher>();
-builder.Services.AddScoped<IProcessHTML, ProcessHTML>();
-builder.Services.AddScoped<IBuildUri, BuildUri>();
-builder.Services.AddScoped<IHtmlFetcher, HtmlFetcher>();
-builder.Services.AddHttpClient<IPageFetcher, HttpPageFetcher>(client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(10);
-});
-
-builder.Services.AddSingleton<Crawler>();
+builder.Services.AddCrawlerServices();
+builder.Services.Configure<ConfigurationOptions>(
+    builder.Configuration.GetSection(nameof(ConfigurationOptions)));
 
 var provider = builder.Services.BuildServiceProvider();
+var host = builder.Build();
 
 var app = provider.GetRequiredService<Crawler>();
 await app.Run();

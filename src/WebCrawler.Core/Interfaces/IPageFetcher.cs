@@ -4,5 +4,5 @@ namespace WebCrawler.Core.Interfaces;
 
 public interface IPageFetcher
 {
-    public Task<FetchResult> FetchAsync(Uri url,  CancellationToken ct);
+    public Task<FetchResult> FetchAsync(Uri url);
 }
