@@ -8,7 +8,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddCrawlerServices(this IServiceCollection services)
     {
         services.AddTransient<ILinkExtractor, LinkExtractor>();
-        services.AddTransient<IBuildUri, BuildUri>();
+        services.AddTransient<INormaliseUri, NormaliseUri>();
         services.AddHttpClient<IPageFetcher, HttpPageFetcher>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(10);

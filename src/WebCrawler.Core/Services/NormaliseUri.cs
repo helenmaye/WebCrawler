@@ -1,12 +1,12 @@
 using WebCrawler.Core.Interfaces;
 
 namespace WebCrawler.Core.Services;
-public class BuildUri : IBuildUri
+public class NormaliseUri : INormaliseUri
 {
     private static readonly HashSet<string> AllowedSchemes =
         new (StringComparer.OrdinalIgnoreCase) { "http", "https" };
 
-    public Uri? Build(Uri baseUri, string href)
+    public Uri? Normalise(Uri baseUri, string href)
     {
         if (href.StartsWith("javascript:") || href.StartsWith("tel:") || href.StartsWith("mailto:"))
         {

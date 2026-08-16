@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Net;
 using System.Threading.Channels;
 using WebCrawler.Core.Interfaces;
 using WebCrawler.Core.Models;
@@ -16,6 +15,10 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
         var url = Console.ReadLine();
         if (!string.IsNullOrEmpty(url))
         {
+            if (url.EndsWith("/*"))
+            {
+                url =  url.Substring(0, url.Length - 2);
+            }
             var results = await Start(url);
             ResultsWriter.OutputResults(results);
         }
@@ -24,11 +27,12 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
     public async Task<ConcurrentDictionary<Uri, CrawlResult>> Start(string seedUrl)
     {
         var crawlResults = new ConcurrentDictionary<Uri, CrawlResult>();
-        var discovered = new ConcurrentDictionary<Uri, int>();
+        var discovered = new ConcurrentDictionary<Uri, bool>();
         
         var channel = Channel.CreateUnbounded<Uri>();
         
         var inFlight = 0;
+        var pagesEnqueued = 0;
         
         await Enqueue(new Uri(seedUrl));
 
@@ -55,10 +59,15 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
         
         async Task Enqueue(Uri uri)
         {
-            if (!discovered.TryAdd(uri, 0))
+            if (Volatile.Read(ref pagesEnqueued) >= options.Value.MaxPages)
+            {
+                return; // cap reached, stop discovering new work
+            }
+            if (!discovered.TryAdd(uri, true))
             {
                 return; // already added
             }
+            Interlocked.Increment(ref pagesEnqueued);
             Interlocked.Increment(ref inFlight);
             await channel.Writer.WriteAsync(uri);
         }
@@ -80,7 +89,7 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
                 
                 if (link.Host.Equals(url.Host, StringComparison.OrdinalIgnoreCase))
                 {
-                    await enqueue(link);          // only followed if same host
+                    await enqueue(link);
                 }
             }
         }
