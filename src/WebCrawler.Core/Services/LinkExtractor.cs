@@ -3,12 +3,12 @@ using WebCrawler.Core.Interfaces;
 
 namespace WebCrawler.Core.Services;
 
-public class ProcessHtml(IBuildUri uriBuilder) : IProcessHtml
+public class LinkExtractor(IBuildUri uriBuilder) : ILinkExtractor
 {
-    public IEnumerable<Uri> ExtractLinks(string html, Uri baseUri)
+    public async IAsyncEnumerable<Uri> AsyncExtractLinks(string html, Uri baseUri)
     {
         using var context = BrowsingContext.New(Configuration.Default);
-        using var document = context.OpenAsync(req => req.Content(html)).GetAwaiter().GetResult();
+        using var document = await context.OpenAsync(req => req.Content(html));
 
         foreach (var anchor in document.QuerySelectorAll("a[href]"))
         {

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net;
 using System.Threading.Channels;
 using WebCrawler.Core.Interfaces;
 using WebCrawler.Core.Models;
@@ -6,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace WebCrawler.Core.Services;
 
-public class Crawler(IPageFetcher fetcher, IProcessHtml processor, IOptions<ConfigurationOptions> options)
+public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<ConfigurationOptions> options)
 {
     public async Task Run()
     {
@@ -15,18 +16,17 @@ public class Crawler(IPageFetcher fetcher, IProcessHtml processor, IOptions<Conf
         var url = Console.ReadLine();
         if (!string.IsNullOrEmpty(url))
         {
-            await Start(url);
+            var results = await Start(url);
+            ResultsWriter.OutputResults(results);
         }
     }
 
-    public async Task<ConcurrentBag<Uri>> Start(string seedUrl)
+    public async Task<ConcurrentDictionary<Uri, CrawlResult>> Start(string seedUrl)
     {
-        var discovered = new ConcurrentBag<Uri>();
-
-        var channel = Channel.CreateBounded<Uri>(new BoundedChannelOptions(options.Value.ChannelCapacity)
-        {
-            FullMode = BoundedChannelFullMode.Wait
-        });
+        var crawlResults = new ConcurrentDictionary<Uri, CrawlResult>();
+        var discovered = new ConcurrentDictionary<Uri, int>();
+        
+        var channel = Channel.CreateUnbounded<Uri>();
         
         var inFlight = 0;
         
@@ -38,7 +38,7 @@ public class Crawler(IPageFetcher fetcher, IProcessHtml processor, IOptions<Conf
             {
                 try
                 {
-                    await ProcessUrl(url, discovered, Enqueue);
+                    await ProcessUrl(url, crawlResults, Enqueue);
                 }
                 finally
                 {
@@ -51,31 +51,39 @@ public class Crawler(IPageFetcher fetcher, IProcessHtml processor, IOptions<Conf
         })).ToArray();
 
         await Task.WhenAll(workers);
-        return discovered;
+        return crawlResults;
         
         async Task Enqueue(Uri uri)
         {
+            if (!discovered.TryAdd(uri, 0))
+            {
+                return; // already added
+            }
             Interlocked.Increment(ref inFlight);
-            discovered.Add(uri);
             await channel.Writer.WriteAsync(uri);
         }
     }
 
-    private async Task ProcessUrl(Uri url, ConcurrentBag<Uri> discovered, Func<Uri, Task> enqueue)
+    private async Task ProcessUrl(Uri url, ConcurrentDictionary<Uri, CrawlResult> crawlResults, Func<Uri, Task> enqueue)
     {
         var fetchResult = await fetcher.FetchAsync(url);
+        var links = new List<string>();
 
         if (fetchResult.Success && !string.IsNullOrEmpty(fetchResult.Html))
         {
-            foreach (var link in processor.ExtractLinks(fetchResult.Html, url))
+            await foreach (var link in processor.AsyncExtractLinks(fetchResult.Html, url))
             {
-                if (discovered.Contains(link))
+                if (!links.Contains(link.ToString()))
                 {
-                    continue;
+                    links.Add(link.ToString());
                 }
-                await enqueue(link);
+                
+                if (link.Host.Equals(url.Host, StringComparison.OrdinalIgnoreCase))
+                {
+                    await enqueue(link);          // only followed if same host
+                }
             }
         }
-        
+        crawlResults.TryAdd(url, new CrawlResult(links, fetchResult.StatusCode, fetchResult.Error));
     }
 }

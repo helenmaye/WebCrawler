@@ -7,7 +7,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddCrawlerServices(this IServiceCollection services)
     {
-        services.AddTransient<IProcessHtml, ProcessHtml>();
+        services.AddTransient<ILinkExtractor, LinkExtractor>();
         services.AddTransient<IBuildUri, BuildUri>();
         services.AddHttpClient<IPageFetcher, HttpPageFetcher>(client =>
         {

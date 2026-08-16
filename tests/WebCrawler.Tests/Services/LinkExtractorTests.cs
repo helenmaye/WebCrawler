@@ -6,7 +6,7 @@ using WebCrawler.Core.Interfaces;
 
 namespace WebCrawler.Tests.Services;
 
-public class ProcessHtmlTests
+public class LinkExtractorTests
 {
     [Fact]
     public async Task GivenValidHTMLwithLinks_WhenGetLinks_ThenReturnsLinks()
@@ -35,11 +35,15 @@ public class ProcessHtmlTests
         buildUriMock.Build(new Uri(baseHtml), html1).Returns(uri1);
         buildUriMock.Build(new Uri(baseHtml), html2).Returns(uri2);
 
-        IProcessHtml subject = new ProcessHtml(buildUriMock);
+        ILinkExtractor subject = new LinkExtractor(buildUriMock);
 
         //Act
-        var result = subject.ExtractLinks(html, new Uri(baseHtml)).ToList();
-
+        var result = new List<Uri>();
+        await foreach (var uri in subject.AsyncExtractLinks(html, new Uri(baseHtml)))
+        {
+            result.Add(uri);
+        }
+        
         //Assert
         result.Count().ShouldBe(2);
         result.FirstOrDefault().ShouldBe(uri1);
@@ -51,7 +55,7 @@ public class ProcessHtmlTests
     {
         //Arrange
         var buildUriMock = Substitute.For<IBuildUri>();
-        IProcessHtml subject = new ProcessHtml(buildUriMock);
+        ILinkExtractor subject = new LinkExtractor(buildUriMock);
         
         var baseHtml = "https://localhost";
         var html = """
@@ -71,7 +75,11 @@ public class ProcessHtmlTests
         using var doc = await context.OpenAsync(req => req.Content(html));
 
         //Act
-        var result = subject.ExtractLinks(html, new Uri(baseHtml));
+        var result = new List<Uri>();
+        await foreach (var uri in subject.AsyncExtractLinks(html, new Uri(baseHtml)))
+        {
+            result.Add(uri);
+        }
 
         //Assert
         result.Count().ShouldBe(0);

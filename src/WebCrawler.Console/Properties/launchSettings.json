@@ -3,7 +3,6 @@
     "MyConsoleApp": {
       "commandName": "Project",
       "environmentVariables": {
-        "ConfigurationOptions__ChannelCapacity": "100",
         "ConfigurationOptions__MaxConcurrency": "10"
       }
     }

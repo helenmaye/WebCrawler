@@ -12,6 +12,11 @@ public class BuildUri : IBuildUri
         {
             return null;
         }
+        
+        if (href.EndsWith("/"))
+        {
+            href = href[..^1];
+        }
 
         if (!Uri.TryCreate(baseUri, href, out var absolute) || !AllowedSchemes.Contains(absolute.Scheme))
         {
