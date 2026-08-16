@@ -10,9 +10,7 @@ builder.Services.AddCrawlerServices();
 builder.Services.Configure<ConfigurationOptions>(
     builder.Configuration.GetSection(nameof(ConfigurationOptions)));
 
-var provider = builder.Services.BuildServiceProvider();
-builder.Build();
-
-var app = provider.GetRequiredService<Crawler>();
+var host = builder.Build();
+var app = host.Services.GetRequiredService<Crawler>();
 await app.Run();
 

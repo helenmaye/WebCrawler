@@ -12,7 +12,7 @@ public class HttpPageFetcher(HttpClient httpClient) : IPageFetcher
             using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseContentRead);
 
             if (!response.IsSuccessStatusCode)
-                return new FetchResult(url)
+                return new FetchResult
                 {
                     StatusCode = response.StatusCode,
                     Success = false,
@@ -21,7 +21,7 @@ public class HttpPageFetcher(HttpClient httpClient) : IPageFetcher
 
             var html = await response.Content.ReadAsStringAsync();
 
-            return new FetchResult(url)
+            return new FetchResult
             {
                 StatusCode = response.StatusCode,
                 Success = true,
@@ -30,7 +30,7 @@ public class HttpPageFetcher(HttpClient httpClient) : IPageFetcher
         }
         catch (HttpRequestException ex)
         {
-            return new FetchResult(url)
+            return new FetchResult
             {
                 Success = false,
                 Error = $"Exception Occurred {ex.Message}"

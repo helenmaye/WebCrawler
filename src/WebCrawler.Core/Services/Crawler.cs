@@ -17,7 +17,7 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
         {
             if (url.EndsWith("/*"))
             {
-                url =  url.Substring(0, url.Length - 2);
+                url =  url[..^2];
             }
             var results = await Start(url);
             ResultsWriter.OutputResults(results);
@@ -28,7 +28,6 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
     {
         var crawlResults = new ConcurrentDictionary<Uri, CrawlResult>();
         var discovered = new ConcurrentDictionary<Uri, bool>();
-        
         var channel = Channel.CreateUnbounded<Uri>();
         
         var inFlight = 0;
@@ -46,7 +45,7 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
                 }
                 finally
                 {
-                    if (Interlocked.Decrement(ref inFlight) == 0)
+                    if (AllQueuedItemsProcessed(ref inFlight))
                     {
                         channel.Writer.TryComplete();
                     }
@@ -59,18 +58,35 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
         
         async Task Enqueue(Uri uri)
         {
-            if (Volatile.Read(ref pagesEnqueued) >= options.Value.MaxPages)
+            if (MaxPagesExceeded(ref pagesEnqueued) || Duplicate(discovered, uri))
             {
-                return; // cap reached, stop discovering new work
-            }
-            if (!discovered.TryAdd(uri, true))
-            {
-                return; // already added
+                return;
             }
             Interlocked.Increment(ref pagesEnqueued);
             Interlocked.Increment(ref inFlight);
-            await channel.Writer.WriteAsync(uri);
+            
+            await WriteToChannel(channel, uri);
         }
+    }
+
+    private static bool AllQueuedItemsProcessed(ref int inFlight)
+    {
+        return Interlocked.Decrement(ref inFlight) == 0;
+    }
+
+    private static ValueTask WriteToChannel(Channel<Uri> channel, Uri uri)
+    {
+        return channel.Writer.WriteAsync(uri);
+    }
+
+    private static bool Duplicate(ConcurrentDictionary<Uri, bool> discovered, Uri uri)
+    {
+        return !discovered.TryAdd(uri, true);
+    }
+
+    private bool MaxPagesExceeded(ref int pagesEnqueued)
+    {
+        return Volatile.Read(ref pagesEnqueued) >= options.Value.MaxPages;
     }
 
     private async Task ProcessUrl(Uri url, ConcurrentDictionary<Uri, CrawlResult> crawlResults, Func<Uri, Task> enqueue)
@@ -82,17 +98,27 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
         {
             await foreach (var link in processor.AsyncExtractLinks(fetchResult.Html, url))
             {
-                if (!links.Contains(link.ToString()))
+                if (UnaddedLink(links, link))
                 {
                     links.Add(link.ToString());
                 }
                 
-                if (link.Host.Equals(url.Host, StringComparison.OrdinalIgnoreCase))
+                if (HostIsHostBeingSearched(url, link))
                 {
                     await enqueue(link);
                 }
             }
         }
         crawlResults.TryAdd(url, new CrawlResult(links, fetchResult.StatusCode, fetchResult.Error));
+    }
+
+    private static bool HostIsHostBeingSearched(Uri url, Uri link)
+    {
+        return link.Host.Equals(url.Host, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool UnaddedLink(List<string> links, Uri link)
+    {
+        return !links.Contains(link.ToString());
     }
 }

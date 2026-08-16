@@ -4,10 +4,8 @@ using WebCrawler.Core.Services;
 
 namespace WebCrawler.Tests.Services;
 
-public class NormaliseUriTests
+public class NormaliserTests
 {
-    private readonly INormaliseUri _subject = new NormaliseUri();
-
     [Theory]
     // relative paths
     [InlineData("https://example.com/page1", "/page2", "https://example.com/page2")]
@@ -30,8 +28,8 @@ public class NormaliseUriTests
     {
         var baseUri = new Uri(baseUrl);
 
-        INormaliseUri subject = new NormaliseUri();
-        var result = subject.Normalise(baseUri, href);
+        INormaliser subject = new Normaliser();
+        var result = subject.CreateUri(baseUri, href);
 
         result.ShouldNotBeNull();
         result!.ToString().ShouldBe(expected);
@@ -46,8 +44,8 @@ public class NormaliseUriTests
     {
         var baseUri = new Uri("https://example.com/page1");
 
-        INormaliseUri subject = new NormaliseUri();
-        var result = subject.Normalise(baseUri, href);
+        INormaliser subject = new Normaliser();
+        var result = subject.CreateUri(baseUri, href);
 
         result.ShouldBeNull();
     }
@@ -59,8 +57,8 @@ public class NormaliseUriTests
         // same-origin filtering is presumably a separate concern (in Crawler, not BuildUri).
         var baseUri = new Uri("https://example.com/page1");
 
-        INormaliseUri subject = new NormaliseUri();
-        var result = subject.Normalise(baseUri, "https://external.com/page2");
+        INormaliser subject = new Normaliser();
+        var result = subject.CreateUri(baseUri, "https://external.com/page2");
 
         result.ShouldNotBeNull();
         result!.Host.ShouldBe("external.com");

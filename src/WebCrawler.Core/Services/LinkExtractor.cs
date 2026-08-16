@@ -3,7 +3,7 @@ using WebCrawler.Core.Interfaces;
 
 namespace WebCrawler.Core.Services;
 
-public class LinkExtractor(INormaliseUri uriBuilder) : ILinkExtractor
+public class LinkExtractor(INormaliser normaliser) : ILinkExtractor
 {
     public async IAsyncEnumerable<Uri> AsyncExtractLinks(string html, Uri baseUri)
     {
@@ -18,7 +18,7 @@ public class LinkExtractor(INormaliseUri uriBuilder) : ILinkExtractor
             {
                 continue;
             }
-            var uri = uriBuilder.Normalise(baseUri, href);
+            var uri = normaliser.CreateUri(baseUri, href);
             if (uri != null)
             {
                 yield return uri;

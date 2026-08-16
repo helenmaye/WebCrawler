@@ -9,10 +9,10 @@ namespace WebCrawler.Tests.Services;
 public class LinkExtractorTests
 {
     [Fact]
-    public async Task GivenValidHTMLwithLinks_WhenGetLinks_ThenReturnsLinks()
+    public async Task GivenValidHTMLWithLinks_WhenGetLinks_ThenReturnsLinks()
     {
         //Arrange
-        var buildUriMock = Substitute.For<INormaliseUri>();
+        var normaliser = Substitute.For<INormaliser>();
 
         var baseHtml = "https://localhost";
         var html1 = "/pages/link1";
@@ -32,10 +32,10 @@ public class LinkExtractorTests
         var uri1 = new Uri($"{baseHtml}{html1}");
         var uri2 = new Uri($"{baseHtml}{html2}");
 
-        buildUriMock.Normalise(new Uri(baseHtml), html1).Returns(uri1);
-        buildUriMock.Normalise(new Uri(baseHtml), html2).Returns(uri2);
+        normaliser.CreateUri(new Uri(baseHtml), html1).Returns(uri1);
+        normaliser.CreateUri(new Uri(baseHtml), html2).Returns(uri2);
 
-        ILinkExtractor subject = new LinkExtractor(buildUriMock);
+        ILinkExtractor subject = new LinkExtractor(normaliser);
 
         //Act
         var result = new List<Uri>();
@@ -51,10 +51,10 @@ public class LinkExtractorTests
     }
 
     [Fact]
-    public async Task GivenValidHTMLwithNoLinks_WhenGetLinks_ThenReturnsEmptyEnumerable()
+    public async Task GivenValidHTMLWithNoLinks_WhenGetLinks_ThenReturnsEmptyEnumerable()
     {
         //Arrange
-        var buildUriMock = Substitute.For<INormaliseUri>();
+        var buildUriMock = Substitute.For<INormaliser>();
         ILinkExtractor subject = new LinkExtractor(buildUriMock);
         
         var baseHtml = "https://localhost";
@@ -82,6 +82,6 @@ public class LinkExtractorTests
         }
 
         //Assert
-        result.Count().ShouldBe(0);
+        result.Count.ShouldBe(0);
     }
 }

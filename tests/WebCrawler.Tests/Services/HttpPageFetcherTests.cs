@@ -2,7 +2,6 @@
 using Shouldly;
 using WebCrawler.Core.Services;
 using WebCrawler.Tests.Handlers;
-using WebCrawler.Tests.IntegrationTests;
 
 namespace WebCrawler.Tests.Services;
 

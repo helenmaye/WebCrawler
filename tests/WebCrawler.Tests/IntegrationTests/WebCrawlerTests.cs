@@ -157,6 +157,8 @@ public class WebCrawlerTests
         results.ShouldBeEquivalentTo(expectedResults);
     }
 
+    
+    //This test is potentially flaky as it is comparing times
     [Fact]
     public async Task GivenMultipleSlowPages_WhenCrawl_ThenPagesAreFetchedConcurrentlyNotSequentially()
     {
