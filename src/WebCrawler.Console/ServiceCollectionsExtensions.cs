@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using WebCrawler.Core.DataStores;
 using WebCrawler.Core.Services;
 using WebCrawler.Core.Interfaces;
 
@@ -9,6 +10,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddTransient<ILinkExtractor, LinkExtractor>();
         services.AddTransient<INormaliser, Normaliser>();
+        services.AddSingleton<ICrawlResultsStore, InMemoryCrawlResultsStore>();
         services.AddHttpClient<IPageFetcher, HttpPageFetcher>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(10);

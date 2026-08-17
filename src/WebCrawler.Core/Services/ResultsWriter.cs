@@ -1,12 +1,11 @@
-﻿using System.Collections.Concurrent;
-using System.Net;
+﻿using System.Net;
 using WebCrawler.Core.Models;
 
 namespace WebCrawler.Core.Services;
 
 public static class ResultsWriter
 {
-    public static void OutputResults(ConcurrentDictionary<Uri, CrawlResult> results)
+    public static void OutputResults(IReadOnlyDictionary<Uri, CrawlResult> results)
     {
         foreach (var result in results)
         {

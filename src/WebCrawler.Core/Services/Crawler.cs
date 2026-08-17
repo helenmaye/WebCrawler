@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace WebCrawler.Core.Services;
 
-public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<ConfigurationOptions> options)
+public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, ICrawlResultsStore store, IOptions<ConfigurationOptions> options)
 {
     public async Task Run()
     {
@@ -19,14 +19,15 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
             {
                 url =  url[..^2];
             }
-            var results = await Start(url);
+            await Start(url);
+            var results = store.GetAll();
             ResultsWriter.OutputResults(results);
+            store.Clear();
         }
     }
 
-    public async Task<ConcurrentDictionary<Uri, CrawlResult>> Start(string seedUrl)
+    public async Task Start(string seedUrl)
     {
-        var crawlResults = new ConcurrentDictionary<Uri, CrawlResult>();
         var discovered = new ConcurrentDictionary<Uri, bool>();
         var channel = Channel.CreateUnbounded<Uri>();
         
@@ -41,7 +42,7 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
             {
                 try
                 {
-                    await ProcessUrl(url, crawlResults, Enqueue);
+                    await ProcessUrl(url, Enqueue);
                 }
                 finally
                 {
@@ -54,7 +55,7 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
         })).ToArray();
 
         await Task.WhenAll(workers);
-        return crawlResults;
+        return;
         
         async Task Enqueue(Uri uri)
         {
@@ -89,7 +90,7 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
         return Volatile.Read(ref pagesEnqueued) >= options.Value.MaxPages;
     }
 
-    private async Task ProcessUrl(Uri url, ConcurrentDictionary<Uri, CrawlResult> crawlResults, Func<Uri, Task> enqueue)
+    private async Task ProcessUrl(Uri url, Func<Uri, Task> enqueue)
     {
         var fetchResult = await fetcher.FetchAsync(url);
         var links = new List<string>();
@@ -109,7 +110,8 @@ public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, IOptions<Co
                 }
             }
         }
-        crawlResults.TryAdd(url, new CrawlResult(links, fetchResult.StatusCode, fetchResult.Error));
+
+        store.TryAdd(url, new CrawlResult(links, fetchResult.StatusCode, fetchResult.Error));
     }
 
     private static bool HostIsHostBeingSearched(Uri url, Uri link)
