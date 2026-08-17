@@ -20,6 +20,11 @@ https://crawlme.monzo.com/
 The `.../*` wildcard form from the task description is also accepted and
 treated the same as the bare URL (the trailing `/*` is stripped).
 
+Note : there are 2 environment settings held in 
+`src/WebCrawler.Console/Properties/launchSettings.json`
+- `MaxConcurrency` - number of workers running at the same time (default 10)
+- `MaxPages` - max number of pages added to the queue before program will stop (default 500)
+
 ## Running the tests
 
 ```
@@ -31,9 +36,10 @@ dotnet test
 ```
 src/
   WebCrawler.Core/        crawling logic, no console or DI concerns
-    Interfaces/           IPageFetcher, ILinkExtractor, INormaliser
-    Models/                CrawlResult, FetchResult, ConfigurationOptions
-    Services/              Crawler, HttpPageFetcher, LinkExtractor, Normaliser, ResultsWriter
+    DataStores/           InMemoryCrawlResultStore
+    Interfaces/           ICrawlResultStore, IPageFetcher, ILinkExtractor, INormaliser
+    Models/               CrawlResult, FetchResult, ConfigurationOptions
+    Services/             Crawler, HttpPageFetcher, LinkExtractor, Normaliser, ResultsWriter
   WebCrawler.Console/     composition root - DI wiring, entry point, console I/O
 tests/
   WebCrawler.Tests/
@@ -42,19 +48,23 @@ tests/
 ```
 
 The split exists so that `WebCrawler.Core` has no dependency on the console
-or on how it's hosted - it could be dropped behind a web API or a different
-front end without changes.
+or on how it's hosted.  In the future it could be dropped behind a web API 
+or a different front end without changes.
+
+The data storage could be swapped for a permanent store in future.
 
 ### Key components
 
 - **`Crawler`** - orchestrates the crawl: owns the work queue, concurrency,
-  and deduplication. Delegates fetching to `IPageFetcher` and parsing to
-  `ILinkExtractor`.
+  and deduplication. Delegates fetching to `IPageFetcher`, parsing to
+  `ILinkExtractor` and storing to `ICrawlResultStore`.
 - **`HttpPageFetcher`** - thin wrapper over `HttpClient` (injected via
   `IHttpClientFactory`, so connections are pooled rather than creating a new
   `HttpClient` per request). Converts non-success responses and exceptions
   into a `FetchResult` rather than throwing, so one bad page can't take down
   the crawl.
+- **`InMemoryCrawlResultStore`** - Stores the results in a thread safe 
+  dictionary
 - **`LinkExtractor`** - parses HTML with AngleSharp (a parsing library, not
   a crawling framework) and yields every `href` found, resolved to an
   absolute `Uri` via `INormaliser`.
@@ -69,7 +79,7 @@ The crawl is a producer/consumer pipeline over a `System.Threading.Channels`
 channel:
 
 - A fixed pool of worker tasks (`ConfigurationOptions.MaxConcurrency`, default
-  10) read URLs from the channel and process them concurrently.
+  10, set in config) read URLs from the channel and process them concurrently.
 - Processing a page can enqueue more URLs (its same-host links), so the
   channel is also being written to by the same workers that are reading
   from it.
@@ -84,9 +94,6 @@ channel:
 - Deduplication uses a `ConcurrentDictionary<Uri, bool>` with `TryAdd` as an
   atomic "have I seen this?" check, so the same URL is never enqueued twice
   even when multiple pages link to it concurrently.
-
-`ConfigurationOptions.MaxPages` (default 500) caps the crawl as a safety net
-against unbounded sites.
 
 ## Design decisions and assumptions
 
@@ -113,6 +120,8 @@ summarised here:
   exceptions are captured as a `CrawlResult` with an error/status rather than
   throwing, so a broken page doesn't stop the rest of the crawl. Its links
   are consequently never discovered.
+- **Limit running** `MaxPages` configuration setting (default 500) caps the 
+  crawl as a safety net against unbounded sites.  
 
 ## Known limitations / what's next
 
@@ -130,3 +139,13 @@ Scoped out to stay within the ~4 hour guideline:
   (empty) HTML rather than skipped.
 - **Output is print-to-console only** - no structured export (JSON/CSV/sitemap),
   since the brief was explicit that format wasn't the focus.
+- **Crawl is capped by number of pages, not by depth.** `MaxPages` prevents 
+  a crawl from running forever, but a single wide/deep section of the site 
+  graph could exhaust the whole budget before other sections are ever 
+  reached. A `MaxDepth` limit alongside it would bound how far from the 
+  seed URL the crawl wanders, independent of how many pages that entails.
+- **No application logging.** The project relies on console `Write` calls for 
+  output rather than structured logging. `Microsoft.Extensions.Http`'s default 
+  request/response logging has been turned off as noise. This could be 
+  replaced in the future with purposeful logging around failures and limits 
+  being hit.

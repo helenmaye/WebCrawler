@@ -4,7 +4,7 @@ using WebCrawler.Core.Models;
 
 namespace WebCrawler.Core.DataStores;
 
-public class InMemoryCrawlResultsStore : ICrawlResultsStore
+public class InMemoryCrawlResultStore : ICrawlResultStore
 {
     private readonly ConcurrentDictionary<Uri, CrawlResult> _results = new();
 

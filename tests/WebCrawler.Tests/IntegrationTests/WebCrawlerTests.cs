@@ -41,7 +41,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}1");
@@ -81,7 +81,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}1");
@@ -119,7 +119,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}1");
@@ -157,7 +157,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}1");
@@ -198,7 +198,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
 
          //Act
          var stopwatch = Stopwatch.StartNew();
@@ -244,7 +244,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}1");
@@ -276,7 +276,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}1");
@@ -313,7 +313,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}1");
@@ -343,7 +343,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}1");
@@ -374,7 +374,7 @@ public class WebCrawlerTests
              .Build();
 
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}");
@@ -411,7 +411,7 @@ public class WebCrawlerTests
              .Build();
      
          var crawler = host.Services.GetRequiredService<Crawler>();
-         var resultsStore = host.Services.GetRequiredService<ICrawlResultsStore>();
+         var resultsStore = host.Services.GetRequiredService<ICrawlResultStore>();
          
          //Act
          await crawler.Start($"{pageUrl}1");

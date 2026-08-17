@@ -10,7 +10,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddTransient<ILinkExtractor, LinkExtractor>();
         services.AddTransient<INormaliser, Normaliser>();
-        services.AddSingleton<ICrawlResultsStore, InMemoryCrawlResultsStore>();
+        services.AddSingleton<ICrawlResultStore, InMemoryCrawlResultStore>();
         services.AddHttpClient<IPageFetcher, HttpPageFetcher>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(10);

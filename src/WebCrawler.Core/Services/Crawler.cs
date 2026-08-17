@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace WebCrawler.Core.Services;
 
-public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, ICrawlResultsStore store, IOptions<ConfigurationOptions> options)
+public class Crawler(IPageFetcher fetcher, ILinkExtractor processor, ICrawlResultStore store, IOptions<ConfigurationOptions> options)
 {
     public async Task Run()
     {
